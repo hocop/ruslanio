@@ -1,4 +1,4 @@
-name: (Manual) Build and publish Python distributions to PyPI and TestPyPI
+name: Build and publish to PyPI
 
 on:
   workflow_dispatch:
