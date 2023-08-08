@@ -4,6 +4,7 @@ on: push
 
 jobs:
   build-n-publish:
+    environment: production
     name: Build and publish Python distributions to PyPI and TestPyPI
     runs-on: ubuntu-latest
     steps:
