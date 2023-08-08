@@ -45,7 +45,7 @@ setup(
     author_email='',
     url='https://github.com/hocop/ruslanio',
     packages=get_packages(PACKAGE_NAME),
-    license="MIT",
+    license="WTFPL",
     include_package_data=True,
     install_requires=read('requirements.txt').splitlines()
 )
