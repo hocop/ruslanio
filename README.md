@@ -10,6 +10,8 @@
 pip install ruslanio
 ```
 
+Or
+
 ```bash
 pip install git+https://github.com/hocop/ruslanio.git
 ```
