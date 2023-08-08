@@ -1,3 +1,6 @@
+'''
+Based on https://github.com/iamsinghrajat/async-cache/tree/master
+'''
 import asyncio
 import typing as tp
 from collections import OrderedDict
@@ -6,6 +9,10 @@ import datetime
 
 
 class LRU:
+    '''
+    Cache decorator for functions.
+    Supports mutable arguments like lists. Still tries to hash them.
+    '''
     def __init__(self, maxsize=128, class_method=False, logger=None):
         """
         :param maxsize: Use maxsize as None for unlimited size cache
@@ -38,6 +45,14 @@ class LRU:
 
 
 class AsyncLRU:
+    '''
+    Cache decorator for async functions.
+    Supports mutable arguments like lists. Still tries to hash them.
+
+    Difference from https://github.com/iamsinghrajat/async-cache/tree/master:
+    * If function is not computed yet, but called second time, it waits instead of starting a new coroutine
+    * Can be class method and use logger
+    '''
     def __init__(self, maxsize=128, class_method=False, logger=None):
         """
         :param maxsize: Use maxsize as None for unlimited size cache
@@ -69,7 +84,13 @@ class AsyncLRU:
         return wrapper
 
 
-class RedisAsyncLRU:
+class RedisAsyncCache:
+    """
+    Cache decorator for async functions.
+    Supports mutable arguments like lists. Still tries to hash them.
+
+    Warning: This Redis variant of cacher is only for async functions whose output can be converted to json.
+    """
     def __init__(self, name, expire: datetime.timedelta | None = None, class_method=False, logger=None):
         """
         :param name: Name of function, for cache prefix
