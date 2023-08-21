@@ -2,7 +2,8 @@ import typing as tp
 from abc import ABC, abstractmethod
 import numpy as np
 
-from .utils import flatten_list
+from .sorting import argtopk
+from .arrays import flatten_list
 
 
 class Sequence(ABC):
@@ -69,7 +70,7 @@ class BeamSearch:
                 scores[seq_i] + delta_score
                 for (seq_i, _, delta_score) in candidates
             ])
-            top_i = np.argsort(candidate_scores)[::-1][:self.beam_size]
+            top_i = argtopk(candidate_scores, self.beam_size)
 
             # Update beam
             new_sequences = []
