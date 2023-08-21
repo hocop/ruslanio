@@ -2,7 +2,7 @@ import typing as tp
 
 
 def flatten_list(l: tp.Any, times: int = -1):
-    # Check exit contditions
+    # Check exit conditions
     if times == 0:
         return l
     if not isinstance(l, list):
