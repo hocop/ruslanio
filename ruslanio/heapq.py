@@ -1,5 +1,5 @@
 '''
-Functions copied from heapq, but decorated with numba.njit.
+Functions copied from python heapq, but decorated with numba.njit.
 Also added arg- versions of these functions, to use in argtopk
 '''
 
