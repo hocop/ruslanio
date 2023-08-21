@@ -1,3 +1,8 @@
+'''
+Functions copied from heapq, but decorated with numba.njit.
+Also added arg- versions of these functions, to use in argtopk
+'''
+
 import numpy as np
 import numba as nb
 
