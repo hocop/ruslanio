@@ -12,6 +12,8 @@ def topk(seq: np.ndarray, k=10):
     Complexity is O(N * log(k)), where N = len(seq).
     Works only with numpy arrays.
 
+    First time calling this function will be slow because it will compile.
+
     Equivalent to `np.sort(seq)[-k:][::-1]` or `heapq.nlargest(k, seq)`.
     First option is slow because its complexity is O(N * log(N)).
     Second option is slow because it is pure python.
