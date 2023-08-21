@@ -2,6 +2,8 @@ import typing as tp
 from abc import ABC, abstractmethod
 import numpy as np
 
+from .utils import flatten_list
+
 
 class Sequence(ABC):
     def __init__(self):
@@ -30,13 +32,6 @@ NoItem = NoItemClass()
 class BeamSearch:
     def __init__(self, beam_size: int):
         self.beam_size = beam_size
-
-    def _flatten_list_once(self, l: list[list[tp.Any]]):
-        new_l = []
-        for sub_l in l:
-            for item in sub_l:
-                new_l.append(item)
-        return new_l
 
     def search(
         self,
@@ -69,7 +64,7 @@ class BeamSearch:
             ])
 
             # Find top scoring candidates
-            candidates = self._flatten_list_once(candidates)
+            candidates = flatten_list(candidates, 1)
             candidate_scores = np.array([
                 scores[seq_i] + delta_score
                 for (seq_i, _, delta_score) in candidates
