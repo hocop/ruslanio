@@ -7,15 +7,13 @@ from collections import OrderedDict
 import msgspec
 import datetime
 
-import redis.asyncio
-
 
 class LRU:
     '''
     Cache decorator for functions.
     Supports mutable arguments like lists. Still tries to hash them.
     '''
-    def __init__(self, maxsize=128, class_method=False, logger=None):
+    def __init__(self, maxsize=None, class_method=False, logger=None):
         """
         :param maxsize: Use maxsize as None for unlimited size cache
         :param class_method: Set True to ignore the first "self" argument
@@ -55,7 +53,7 @@ class AsyncLRU:
     * If function is not computed yet, but called second time, it waits instead of starting a new coroutine
     * Can be class method and use logger
     '''
-    def __init__(self, maxsize=128, class_method=False, logger=None):
+    def __init__(self, maxsize=None, class_method=False, logger=None):
         """
         :param maxsize: Use maxsize as None for unlimited size cache
         :param class_method: Set True to ignore the first "self" argument
@@ -102,6 +100,7 @@ class RedisAsyncCache:
         """
         self.name = name
         self.class_method = class_method
+        self.expire = expire
         import redis
         self.redis = redis.asyncio.Redis()
         self.logger = logger
@@ -117,12 +116,11 @@ class RedisAsyncCache:
                 if value_enc is None:
                     value = await func(*args, **kwargs)
                     value_enc = msgspec.json.encode(value)
-                    asyncio.create_task(self.redis.set(key, value_enc))
+                    asyncio.create_task(self.redis.set(key, value_enc, ex=self.expire))
                 else:
                     value = msgspec.json.decode(value_enc)
                     if self.logger is not None:
                         self.logger.debug(f'Using cached {self.name} {key_args} {kwargs}')
-                        print('hi')
                 return value
             else:
                 return await func(*args, **kwargs)
@@ -134,10 +132,10 @@ class RedisAsyncCache:
 
 class RedisCache:
     """
-    Cache decorator for async functions.
+    Cache decorator for functions.
     Supports mutable arguments like lists. Still tries to hash them.
 
-    Warning: This Redis variant of cacher is only for async functions whose output can be converted to json.
+    Warning: This Redis variant of cacher is only for functions whose output can be converted to json.
     """
     def __init__(self, name, expire: datetime.timedelta | None = None, class_method=False, logger=None):
         """
@@ -148,7 +146,9 @@ class RedisCache:
         """
         self.name = name
         self.class_method = class_method
-        self.lru = _RedisDict(expire=expire)
+        self.expire = expire
+        import redis
+        self.redis = redis.Redis()
         self.logger = logger
 
     def __call__(self, func):
@@ -158,37 +158,22 @@ class RedisCache:
                 key_args = args[1:] if self.class_method else args
                 key = self.name + ' -- ' + str(_KEY(key_args, kwargs))
                 # Call function or use cached value
-                if key not in self.lru:
-                    self.lru[key] = func(*args, **kwargs)
+                value_enc = self.redis.get(key)
+                if value_enc is None:
+                    value = func(*args, **kwargs)
+                    value_enc = msgspec.json.encode(value)
+                    self.redis.set(key, value_enc, ex=self.expire)
                 else:
+                    value = msgspec.json.decode(value_enc)
                     if self.logger is not None:
                         self.logger.debug(f'Using cached {self.name} {key_args} {kwargs}')
-                return self.lru[key]
+                return value
             else:
                 return func(*args, **kwargs)
 
         wrapper.__name__ += func.__name__
 
         return wrapper
-
-
-class _RedisDict:
-    def __init__(self, expire):
-        import redis
-        self.redis = redis.Redis()
-        self.expire = expire
-
-    def __getitem__(self, key: str):
-        value = self.redis.get(key)
-        value = msgspec.json.decode(value)
-        return value
-
-    def __contains__(self, key: str):
-        return key in self.redis
-
-    def __setitem__(self, key, value):
-        value = msgspec.json.encode(value)
-        self.redis.set(key, value, ex=self.expire)
 
 
 class _LRU(OrderedDict):
