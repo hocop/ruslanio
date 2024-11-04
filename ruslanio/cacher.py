@@ -119,7 +119,7 @@ class RedisAsyncCache:
                     value_enc = msgspec.json.encode(value)
                     asyncio.create_task(self.redis.set(key, value_enc))
                 else:
-                    value = msgspec.json.decode(value)
+                    value = msgspec.json.decode(value_enc)
                     if self.logger is not None:
                         self.logger.debug(f'Using cached {self.name} {key_args} {kwargs}')
                         print('hi')
