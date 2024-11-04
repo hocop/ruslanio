@@ -113,13 +113,15 @@ class RedisAsyncCache:
                 key_args = args[1:] if self.class_method else args
                 key = self.name + ' -- ' + str(_KEY(key_args, kwargs))
                 # Call function or use cached value
-                if key not in self.redis:
-                    await self.redis.set(key, await func(*args, **kwargs))
+                value = await self.redis.get(key)
+                if value is None:
+                    value = await func(*args, **kwargs)
+                    asyncio.create_task(self.redis.set(key, value))
                 else:
                     if self.logger is not None:
                         self.logger.debug(f'Using cached {self.name} {key_args} {kwargs}')
                         print('hi')
-                return await self.redis.get(key)
+                return value
             else:
                 return await func(*args, **kwargs)
 
