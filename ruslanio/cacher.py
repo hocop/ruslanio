@@ -7,6 +7,8 @@ from collections import OrderedDict
 import msgspec
 import datetime
 
+import redis.asyncio
+
 
 class LRU:
     '''
@@ -100,7 +102,8 @@ class RedisAsyncCache:
         """
         self.name = name
         self.class_method = class_method
-        self.lru = _RedisDict(expire=expire)
+        import redis
+        self.redis = redis.asyncio.Redis()
         self.logger = logger
 
     def __call__(self, func):
@@ -110,14 +113,54 @@ class RedisAsyncCache:
                 key_args = args[1:] if self.class_method else args
                 key = self.name + ' -- ' + str(_KEY(key_args, kwargs))
                 # Call function or use cached value
+                if key not in self.redis:
+                    await self.redis.set(key, await func(*args, **kwargs))
+                else:
+                    if self.logger is not None:
+                        self.logger.debug(f'Using cached {self.name} {key_args} {kwargs}')
+                return await self.redis.get(key)
+            else:
+                return await func(*args, **kwargs)
+
+        wrapper.__name__ += func.__name__
+
+        return wrapper
+
+
+class RedisCache:
+    """
+    Cache decorator for async functions.
+    Supports mutable arguments like lists. Still tries to hash them.
+
+    Warning: This Redis variant of cacher is only for async functions whose output can be converted to json.
+    """
+    def __init__(self, name, expire: datetime.timedelta | None = None, class_method=False, logger=None):
+        """
+        :param name: Name of function, for cache prefix
+        :param expire: Expiration time
+        :param class_method: Set True to ignore the first "self" argument
+        :param logger: if set, this function will print debug logs when cache is used
+        """
+        self.name = name
+        self.class_method = class_method
+        self.lru = _RedisDict(expire=expire)
+        self.logger = logger
+
+    def __call__(self, func):
+        def wrapper(*args, use_cache=True, **kwargs):
+            if use_cache:
+                # Make key for caching
+                key_args = args[1:] if self.class_method else args
+                key = self.name + ' -- ' + str(_KEY(key_args, kwargs))
+                # Call function or use cached value
                 if key not in self.lru:
-                    self.lru[key] = await func(*args, **kwargs)
+                    self.lru[key] = func(*args, **kwargs)
                 else:
                     if self.logger is not None:
                         self.logger.debug(f'Using cached {self.name} {key_args} {kwargs}')
                 return self.lru[key]
             else:
-                return await func(*args, **kwargs)
+                return func(*args, **kwargs)
 
         wrapper.__name__ += func.__name__
 
