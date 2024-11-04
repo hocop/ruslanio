@@ -118,6 +118,7 @@ class RedisAsyncCache:
                 else:
                     if self.logger is not None:
                         self.logger.debug(f'Using cached {self.name} {key_args} {kwargs}')
+                        print('hi')
                 return await self.redis.get(key)
             else:
                 return await func(*args, **kwargs)
