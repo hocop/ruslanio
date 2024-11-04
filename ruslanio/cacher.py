@@ -6,6 +6,7 @@ import typing as tp
 from collections import OrderedDict
 import msgspec
 import datetime
+from functools import wraps
 
 
 class LRU:
@@ -24,6 +25,7 @@ class LRU:
         self.logger = logger
 
     def __call__(self, func):
+        @wraps(func)
         def wrapper(*args, use_cache=True, **kwargs):
             if use_cache:
                 # Make key for caching
@@ -64,6 +66,7 @@ class AsyncLRU:
         self.logger = logger
 
     def __call__(self, func):
+        @wraps(func)
         async def wrapper(*args, use_cache=True, **kwargs):
             if use_cache:
                 # Make key for caching
@@ -106,6 +109,7 @@ class RedisAsyncCache:
         self.logger = logger
 
     def __call__(self, func):
+        @wraps(func)
         async def wrapper(*args, use_cache=True, **kwargs):
             if use_cache:
                 # Make key for caching
@@ -152,6 +156,7 @@ class RedisCache:
         self.logger = logger
 
     def __call__(self, func):
+        @wraps(func)
         def wrapper(*args, use_cache=True, **kwargs):
             if use_cache:
                 # Make key for caching
