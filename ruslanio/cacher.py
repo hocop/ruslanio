@@ -4,7 +4,7 @@ Based on https://github.com/iamsinghrajat/async-cache/tree/master
 import asyncio
 import typing as tp
 from collections import OrderedDict
-import json
+import msgspec
 import datetime
 
 
@@ -30,7 +30,7 @@ class LRU:
                 key_args = args[1:] if self.class_method else args
                 key = _KEY(key_args, kwargs)
                 # Call function or use cached value
-                if not key in self.lru:
+                if key not in self.lru:
                     self.lru[key] = func(*args, **kwargs)
                 else:
                     if self.logger is not None:
@@ -70,7 +70,7 @@ class AsyncLRU:
                 key_args = args[1:] if self.class_method else args
                 key = _KEY(key_args, kwargs)
                 # Call function or use cached value
-                if not key in self.lru:
+                if key not in self.lru:
                     self.lru[key] = asyncio.create_task(func(*args, **kwargs))
                 else:
                     if self.logger is not None:
@@ -110,7 +110,7 @@ class RedisAsyncCache:
                 key_args = args[1:] if self.class_method else args
                 key = self.name + ' -- ' + str(_KEY(key_args, kwargs))
                 # Call function or use cached value
-                if not key in self.lru:
+                if key not in self.lru:
                     self.lru[key] = await func(*args, **kwargs)
                 else:
                     if self.logger is not None:
@@ -132,14 +132,14 @@ class _RedisDict:
 
     def __getitem__(self, key: str):
         value = self.redis.get(key)
-        value = json.loads(value)
+        value = msgspec.json.decode(value)
         return value
 
     def __contains__(self, key: str):
         return key in self.redis
 
     def __setitem__(self, key, value):
-        value = json.dumps(value, ensure_ascii=False)
+        value = msgspec.json.encode(value)
         self.redis.set(key, value, ex=self.expire)
 
 

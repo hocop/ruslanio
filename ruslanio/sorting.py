@@ -1,8 +1,8 @@
 import numpy as np
 import numba as nb
 
-from .heapq import heapify, heappushpop
-from .heapq import argheapify, argheappushpop
+from .fast_heapq import heapify, heappushpop
+from .fast_heapq import argheapify, argheappushpop
 
 
 @nb.jit(nopython=True)
@@ -32,7 +32,7 @@ def topk(seq: np.ndarray, k=10):
 def argtopk(seq: np.ndarray, k=10):
     '''
     Works like `ruslanio.sorting.topk`, but returns indeces instead of values.
-    
+
     Equivalent to `np.argsort(seq)[-k:][::-1]`
     '''
     topheap = argheapify(seq[:k])

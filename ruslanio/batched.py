@@ -25,10 +25,10 @@ class batched:
             if len(self.batch) >= self.batch_size or (len(self.batch) != 0 and timed_out):
                 inputs = [pair[0] for pair in self.batch]
                 futures = [pair[1] for pair in self.batch]
-                asyncio.create_task(self.batched_task(inputs, futures))
+                asyncio.create_task(self._task(inputs, futures))
                 self.batch = []
 
-    async def batched_task(self, inputs, futures):
+    async def _task(self, inputs, futures):
         results = await self.func(inputs)
         await self.output_q.put((results, futures))
 
