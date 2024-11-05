@@ -120,7 +120,7 @@ class RedisAsyncCache:
                 if value_enc is None:
                     value = await func(*args, **kwargs)
                     value_enc = msgspec.json.encode(value)
-                    asyncio.create_task(self.redis.set(key, value_enc, ex=self.expire))
+                    await self.redis.set(key, value_enc, ex=self.expire)
                 else:
                     value = msgspec.json.decode(value_enc)
                     if self.logger is not None:
