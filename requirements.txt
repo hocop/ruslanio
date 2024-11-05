@@ -2,3 +2,4 @@ numpy
 opencv-python
 tqdm
 msgspec
+redis==5.0.1
